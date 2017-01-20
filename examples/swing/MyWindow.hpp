@@ -72,6 +72,7 @@ private:
   double mSpeed;
   std::vector<unsigned char> mInputSensor;
   std::vector<unsigned char> mScreenshotTemp;
+  std::deque<std::vector<unsigned char>> mPrevScreenshot;
   bool mDumpImages;
   double mTotalEffort;
 };

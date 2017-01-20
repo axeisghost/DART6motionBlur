@@ -118,44 +118,6 @@ void MyWindow::drawWorld() const {
   glEnable(GL_LIGHTING);
 }
 
-/*
- void MyWindow::drawSkels() {
-  glEnable(GL_LIGHTING);
-  //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    
-  //for (unsigned int i = 0; i < mWorld->getNumSkeletons(); i++)
-    //mWorld->getSkeleton(i)->draw(mRI);
-  //  drawSkeleton(mWorld->getSkeleton(i).get());
-    
-  //SimWindow::drawWorld();
-    
-  
-  // display the frame count in 2D text
-  char buff[64];
-#ifdef _WIN32
-    _snprintf(buff, sizeof(buff), "%.4f", mTotalEffort);
-#else
-  std::snprintf(buff, sizeof(buff), "%.4f", mTotalEffort);
-#endif
-  std::string effort(buff);
-  glColor3f(0.0, 0.0, 0.0);
-  dart::gui::drawStringOnScreen(0.02f, 0.05f, effort);
-  glEnable(GL_LIGHTING);
-  
-#ifdef _WIN32
-  _snprintf(buff, sizeof(buff), "/ %d",
-            mWorld->getRecording()->getNumFrames());
-#else
-  std::snprintf(buff, sizeof(buff), "/ %d",
-                mWorld->getRecording()->getNumFrames());
-#endif
-  std::string elapsedTime(buff);
-  glColor3f(0.0, 0.0, 0.0);
-  dart::gui::drawStringOnScreen(0.15f, 0.02f, elapsedTime);
-  glEnable(GL_LIGHTING);
-}
-*/
- 
 void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
   switch (_key) {
     case ' ':  // use space key to play or stop the motion
@@ -294,10 +256,20 @@ bool MyWindow::dumpImages() {
     memcpy(&mScreenshotTemp[row * mWinWidth * 4],
            &mInputSensor[(mWinHeight - row - 1) * mWinWidth * 4], mWinWidth * 4);
   }
-  
+  std::vector<unsigned char> toPush = std::vector<unsigned char> (mScreenshotTemp);
+  mPrevScreenshot.push_back(toPush);
+  if (mPrevScreenshot.size() > 10) {
+    mPrevScreenshot.pop_front();
+  }
+  mScreenshotTemp = std::vector<unsigned char> (mScreenshotTemp.size(), 0);
+  for (std::vector<unsigned char> curr : mPrevScreenshot) {
+    for (unsigned int i = 0; i < mScreenshotTemp.size(); i++) {
+      mScreenshotTemp[i] += curr[i] / (mPrevScreenshot.size());
+    }
+  }
+
   unsigned result = lodepng::encode(fileName,
                                     mScreenshotTemp, mWinWidth, mWinHeight);
-  
   // if there's an error, display it
   if (result) {
     std::cout << "lodepng error " << result << ": "

@@ -59,6 +59,7 @@ Controller::Controller(dart::dynamics::SkeletonPtr _skel, dart::constraint::Cons
   
   //std::cout << "WWWWWWWWWWWWWWWW" << mSkel->getDof("j_thigh_left_z")->getIndexInSkeleton() << std::endl;
     
+    
   mTorques.setZero();
 
   // Using SPD results in simple spring coefficients
@@ -179,6 +180,7 @@ void Controller::checkContactState() {
     //assert(shapeNode1);
     //assert(shapeNode2);
     
+      
     dart::dynamics::BodyNode* body1 = const_cast<dart::dynamics::ShapeFrame*>(contact.collisionObject1->getShapeFrame())->asShapeNode()->getBodyNodePtr().get();
     dart::dynamics::BodyNode* body2 = const_cast<dart::dynamics::ShapeFrame*>(contact.collisionObject2->getShapeFrame())->asShapeNode()->getBodyNodePtr().get();
     //dart::dynamics::BodyNode* body1 = shapeNode1->getBodyNodePtr().get();
