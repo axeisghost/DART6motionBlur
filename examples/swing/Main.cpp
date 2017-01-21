@@ -57,6 +57,7 @@ int main(int argc, char* argv[]) {
   //cs->setCollisionDetector(new dart::collision::DARTCollisionDetector());
   cs->setCollisionDetector(dart::collision::DARTCollisionDetector::create());
   
+  ////////
 
   // Set initial pose
   dart::dynamics::SkeletonPtr biped = myWorld->getSkeleton("fullbody1");
