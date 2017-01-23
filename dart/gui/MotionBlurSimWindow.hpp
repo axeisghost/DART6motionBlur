@@ -42,6 +42,8 @@ public:
   void displayTimer(int _val) override;
     
 protected:
+  // Determines the frequency of the motion blur
+  // Default is 1, which means motion blur 
   int mMotionBlurFrequency;
 
 }; // End of Class Definition
