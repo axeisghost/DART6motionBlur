@@ -42,9 +42,8 @@
 #define LEFT_BOUNDARY -0.6
 #define PLATFORM_SPEED 0.75
 
-MyWindow::MyWindow(): MotionBlurSimWindow() {
+MyWindow::MyWindow(): SimWindow() {
   mController = NULL;
-  mJudger = NULL;
  
   mTrans[0] = -1500.f;
   mZoom = 0.25f;
@@ -53,15 +52,12 @@ MyWindow::MyWindow(): MotionBlurSimWindow() {
   mSpeed = PLATFORM_SPEED;
   mDumpImages = false;
   mTotalEffort = 0;
-    
-  //mDisplayTimeout = 1;
 }
 
 MyWindow::~MyWindow() {
 }
 
 void MyWindow::timeStepping() {
-
   // Compute control force
   mController->computeTorques(mWorld->getSimFrames());
   // Apply control force to skeleton
@@ -74,49 +70,38 @@ void MyWindow::timeStepping() {
   mWorld->step();
   // Update the sensor at 60Hz; pixel values (RGBA) are stored in mInputSensor
   if (mWorld->getSimFrames() % 17 == 0)
-  {
     updateSensor();
-    mJudger->judge();
-    //std::cout << "Tru:" << mWorld->getSkeleton("landing1")->getDof("joint_pos_x")->getPosition() << std::endl;
-  }
-    
-  //if (mWorld->getSimFrames() == 1796)
-  //{
-  //    std::cout << "----------------------------------------------" << std::endl;
-  //    std::cout << "Total frames used:  " << mWorld->getSimFrames() << std::endl;
-  //    std::cout << "Total torque used:  " << mTotalEffort << std::endl;
-  //}
 }
 
 void MyWindow::drawWorld() const {
-  glEnable(GL_LIGHTING);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_LIGHTING);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
-  SimWindow::drawWorld();
-
-  // display the frame count (Additional, the upper line) in 2D text
-  char buff[64];
+    SimWindow::drawWorld();
+    
+    // display the frame count in 2D text
+    char buff[64];
 #ifdef _WIN32
-  _snprintf(buff, sizeof(buff), "%.4f", mTotalEffort);
+    _snprintf(buff, sizeof(buff), "%.4f", mTotalEffort);
 #else
-  std::snprintf(buff, sizeof(buff), "%.4f", mTotalEffort);
+    std::snprintf(buff, sizeof(buff), "%.4f", mTotalEffort);
 #endif
-  std::string effort(buff);
-  glColor3f(0.0, 0.0, 0.0);
-  dart::gui::drawStringOnScreen(0.02f, 0.05f, effort);
-  glEnable(GL_LIGHTING);
+    std::string effort(buff);
+    glColor3f(0.0, 0.0, 0.0);
+    dart::gui::drawStringOnScreen(0.02f, 0.05f, effort);
+    glEnable(GL_LIGHTING);
     
 #ifdef _WIN32
-  _snprintf(buff, sizeof(buff), "/ %d",
+    _snprintf(buff, sizeof(buff), "/ %d",
               mWorld->getRecording()->getNumFrames());
 #else
-  std::snprintf(buff, sizeof(buff), "/ %d",
+    std::snprintf(buff, sizeof(buff), "/ %d",
                   mWorld->getRecording()->getNumFrames());
 #endif
-  std::string elapsedTime(buff);
-  glColor3f(0.0, 0.0, 0.0);
-  dart::gui::drawStringOnScreen(0.15f, 0.02f, elapsedTime);
-  glEnable(GL_LIGHTING);
+    std::string elapsedTime(buff);
+    glColor3f(0.0, 0.0, 0.0);
+    dart::gui::drawStringOnScreen(0.15f, 0.02f, elapsedTime);
+    glEnable(GL_LIGHTING);
 }
 
 void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
@@ -159,22 +144,6 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
       break;
     case 'm':  // release
       mController->setState("RELEASE");
-      /////////////////////////////////////////////////////////////
-          std::cout << "Frame:  " << mWorld->getSimFrames() << std::endl;
-          //std::cout << "x-position:  " << mController->getTorques()[3] << std::endl;
-      /////////////////////////////////////////////////////////////
-      break;
-    case '1':
-      mController->mMode = "Naive";
-      std::cout << "Motion Mode: [Naive] Mode for original environment" << std::endl;
-      break;
-    case '2':
-      mController->mMode = "Threshold";
-      std::cout << "Motion Mode: [Threshold] Use simple strategy to release" << std::endl;
-      break;
-    case '3':
-      mController->mMode = "Test";
-      std::cout << "Motion Mode: [Test] Regardless environment" << std::endl;
       break;
     default:
       Win3D::keyboard(_key, _x, _y);
@@ -184,10 +153,6 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
 
 void MyWindow::setController(Controller* _controller) {
   mController = _controller;
-}
-
-void MyWindow::setJudger(Judger* _judger) {
-    mJudger = _judger;
 }
 
 void MyWindow::movePlatforms() {
@@ -202,11 +167,7 @@ void MyWindow::movePlatforms() {
 
 void MyWindow::updateSensor() {
   if (mInputSensor.size() == 0)
-  {
     mInputSensor.resize(4 * mWinWidth * mWinHeight);
-    mJudger->mVision = &mInputSensor;
-    //mController->mVision = &mInputSensor;
-  }
     
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -228,23 +189,17 @@ void MyWindow::updateSensor() {
   glScalef(0.51, 0.51, 0.51);
   glTranslatef(-1.68962, 0.00920964, -0.00350334);
   
-  //initLights();
-  //draw();
-
-  glReadPixels(0, 0, mWinWidth, mWinHeight, GL_RGBA, GL_UNSIGNED_BYTE, &mInputSensor[0]);
+  initLights();
+  draw();
   
-  // Transfer back
-  //glScalef(1.0f/0.51, 1.0f/0.51, 1.0f/0.51);
-  //glTranslatef(1.68962, -0.00920964, +0.00350334);
-  //glMultMatrixd(t.inverse().data());
-    
-    
+  glReadPixels(0, 0, mWinWidth, mWinHeight,
+               GL_RGBA, GL_UNSIGNED_BYTE, &mInputSensor[0]);
+
   if (mDumpImages)
     dumpImages();
 }
 
 bool MyWindow::dumpImages() {
-
   if (mScreenshotTemp.size() == 0)
     mScreenshotTemp.resize(4 * mWinWidth * mWinHeight);
 
@@ -262,42 +217,16 @@ bool MyWindow::dumpImages() {
     memcpy(&mScreenshotTemp[row * mWinWidth * 4],
            &mInputSensor[(mWinHeight - row - 1) * mWinWidth * 4], mWinWidth * 4);
   }
-
-  // Shot level motion blur
-  /*
-  std::vector<unsigned char> toPush = std::vector<unsigned char> (mScreenshotTemp);
-  mPrevScreenshot.push_back(toPush);
-  if (mPrevScreenshot.size() > 10) {
-    mPrevScreenshot.pop_front();
-  }
-  mScreenshotTemp = std::vector<unsigned char> (mScreenshotTemp.size(), 0);
-  for (std::vector<unsigned char> curr : mPrevScreenshot) {
-    for (unsigned int i = 0; i < mScreenshotTemp.size(); i++) {
-      mScreenshotTemp[i] += curr[i] / (mPrevScreenshot.size());
-    }
-  }
-
+  
   unsigned result = lodepng::encode(fileName,
                                     mScreenshotTemp, mWinWidth, mWinHeight);
+  
   // if there's an error, display it
   if (result) {
     std::cout << "lodepng error " << result << ": "
     << lodepng_error_text(result) << std::endl;
     return false;
   } else {
-    std::cout << "wrote screenshot " << fileName << "\n";
-    return true;
-  }
-  */
-    
-  unsigned result = lodepng::encode(fileName, mScreenshotTemp, mWinWidth, mWinHeight);
-    
-  // if there's an error, display it
-  if (result) {
-    std::cout << "lodepng error " << result << ": " << lodepng_error_text(result) << std::endl;
-    return false;
-  }
-  else {
     std::cout << "wrote screenshot " << fileName << "\n";
     return true;
   }

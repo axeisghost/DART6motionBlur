@@ -1,17 +1,18 @@
-#include "CollisionInterface.h"
-#include "RigidBody.h"
+#include "CollisionInterface.hpp"
+#include "RigidBody.hpp"
 #include <iostream>
 
 using namespace Eigen;
 
 CollisionInterface::CollisionInterface() {
-  mCollisionChecker = new dart::collision::DARTCollisionDetector();
-  mCollisionChecker->setNumMaxContacs(10);
+  //mCollisionChecker = new dart::collision::DARTCollisionDetector();
+  //mCollisionChecker->setNumMaxContacs(10);
+  mCollisionChecker = dart::collision::DARTCollisionDetector::create();
 }
 
 CollisionInterface::~CollisionInterface() {
-  if (mCollisionChecker)
-    delete mCollisionChecker;
+  //if (mCollisionChecker)
+  //  delete mCollisionChecker;
 }
 
 

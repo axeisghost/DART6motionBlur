@@ -1,8 +1,9 @@
-#ifndef _RIGIDBODY_
-#define _RIGIDBODY_
+#ifndef EXAMPLES_RB_RIGIDBODY_HPP_
+#define EXAMPLES_RB_RIGIDBODY_HPP_
 
 #include <Eigen/Dense>
-#include "dart/dart.h"
+#include "dart/dart.hpp"
+#include "dart/gui/gui.hpp"
 
 class RigidBody {
  public:
@@ -29,7 +30,7 @@ class RigidBody {
     }
     virtual ~RigidBody() {}
 
-    void draw(dart::renderer::RenderInterface* _ri);
+    void draw(dart::gui::RenderInterface* _ri);
 
     int getConfigSize() {
 		return mPosition.size() + mOrientation.size();
@@ -50,4 +51,4 @@ class RigidBody {
     Eigen::Vector4d mColor;
 };
 
-#endif
+#endif // EXAMPLES_RB_RIGIDBODY_HPP_

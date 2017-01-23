@@ -1,7 +1,8 @@
-#ifndef _MYWINDOW_
-#define _MYWINDOW_
+#ifndef EXAMPLES_RB_MYWINDOW_HPP_
+#define EXAMPLES_RB_MYWINDOW_HPP_
 
-#include "MyWorld.h"
+#include "MyWorld.hpp"
+#include "dart/gui/gui.hpp"
 
 class MyWindow : public dart::gui::Win3D {
  public:
@@ -49,4 +50,4 @@ class MyWindow : public dart::gui::Win3D {
   void bake();
 };
 
-#endif
+#endif // EXAMPLES_MYWINDOW_HPP_

@@ -35,8 +35,8 @@
  *   POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef APPS_SWING_MYWINDOW_HPP_
-#define APPS_SWING_MYWINDOW_HPP_
+#ifndef EXAMPLES_SWING_MYWINDOW_HPP_
+#define EXAMPLES_SWING_MYWINDOW_HPP_
 
 
 #include <cstdarg>
@@ -46,21 +46,17 @@
 #include "dart/dart.hpp"
 #include "dart/gui/gui.hpp"
 #include "Controller.hpp"
-#include "Vision.hpp"
 
-class MyWindow : public dart::gui::MotionBlurSimWindow
-{
+class MyWindow : public dart::gui::SimWindow {
 public:
   MyWindow();
   virtual ~MyWindow();
 
   virtual void timeStepping();
   void drawWorld() const override;
-  //virtual void drawSkels();
   virtual void keyboard(unsigned char _key, int _x, int _y);
 
   void setController(Controller *_controller);
-  void setJudger(Judger *_judger);
   
 private:
   void movePlatforms();
@@ -68,13 +64,11 @@ private:
   bool dumpImages();
   
   Controller* mController;
-  Judger* mJudger; // The juder added for estimating speed from the vision
   double mSpeed;
   std::vector<unsigned char> mInputSensor;
   std::vector<unsigned char> mScreenshotTemp;
-  //std::deque<std::vector<unsigned char>> mPrevScreenshot;
   bool mDumpImages;
   double mTotalEffort;
 };
 
-#endif  // APPS_SWING_MYWINDOW_HPP_
+#endif  // EXAMPLES_SWING_MYWINDOW_HPP_

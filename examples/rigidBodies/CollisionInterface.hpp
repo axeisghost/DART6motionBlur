@@ -1,10 +1,10 @@
-#ifndef _COLLISIONINTERFACE_
-#define _COLLISIONINTERFACE_
+#ifndef EXAMPLES_RB_COLLISIONINTERFACE_HPP_
+#define EXAMPLES_RB_COLLISIONINTERFACE_HPP_
 
 #include <vector>
 #include <map>
 #include <Eigen/Dense>
-#include "dart/dart.h"
+#include "dart/dart.hpp"
 
 
 class RigidBody;
@@ -47,10 +47,12 @@ class CollisionInterface {
   void updateBodyNodes();
   void postProcess();
 
-  dart::collision::CollisionDetector* mCollisionChecker;
+  std::shared_ptr<dart::collision::CollisionDetector> mCollisionChecker;
+  //std::shared_ptr<dart::collision::CollisionDetector>* mCollisionChecker;
+  //dart::collision::CollisionDetector* mCollisionChecker;
   std::vector<RigidContact> mContacts;
   std::vector<dart::dynamics::SkeletonPtr> mSkeletons;
   std::map<dart::dynamics::BodyNode*, RigidBody*> mNodeMap;
 };
 
-#endif
+#endif // EXAMPLES_RB_COLLISIONINTERFACE_HPP_

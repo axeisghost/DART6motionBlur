@@ -1,6 +1,6 @@
-#include "MyWorld.h"
-#include "RigidBody.h"
-#include "CollisionInterface.h"
+#include "MyWorld.hpp"
+#include "RigidBody.hpp"
+#include "CollisionInterface.hpp"
 #include <iostream>
 
 using namespace Eigen;
@@ -46,12 +46,14 @@ void MyWorld::initializePinata() {
     
     // Weld two seems to make a box
     dart::dynamics::BodyNode* top = mPinataWorld->getSkeleton(0)->getBodyNode("top");
-    dart::dynamics::BodyNode* front = mPinataWorld->getSkeleton(0)->getBodyNode("front");
-    dart::dynamics::BodyNode* back = mPinataWorld->getSkeleton(0)->getBodyNode("back");
-    dart::constraint::WeldJointConstraint *joint1 = new dart::constraint::WeldJointConstraint(top, front);
-    dart::constraint::WeldJointConstraint *joint2 = new dart::constraint::WeldJointConstraint(top, back);
-    mPinataWorld->getConstraintSolver()->addConstraint(joint1);
-    mPinataWorld->getConstraintSolver()->addConstraint(joint2);
+    //dart::dynamics::BodyNode* front = mPinataWorld->getSkeleton(0)->getBodyNode("front");
+    //dart::dynamics::BodyNode* back = mPinataWorld->getSkeleton(0)->getBodyNode("back");
+    //dart::constraint::WeldJointConstraint *joint1 = new dart::constraint::WeldJointConstraint(top, front);
+    //dart::constraint::WeldJointConstraint *joint2 = new dart::constraint::WeldJointConstraint(top, back);
+    //mPinataWorld->getConstraintSolver()->addConstraint(joint1);
+    //mPinataWorld->getConstraintSolver()->addConstraint(joint2);
+    dart::constraint::WeldJointConstraint topFrontBackJoint = std::make_shared<dart::constraint::WeldJointConstraint>(top);
+    mConstraintSolver->addConstraint(topFrontBackJoint);
 }
 
 MyWorld::~MyWorld() {

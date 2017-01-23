@@ -1,10 +1,10 @@
-#ifndef _MYWORLD_
-#define _MYWORLD_
+#ifndef EXAMPLES_RB_MYWORLD_HPP_
+#define EXAMPLES_RB_MYWORLD_HPP_
 
 #include <vector>
 #include <Eigen/Dense>
 #include<Eigen/StdVector>
-#include "dart/dart.h"
+#include "dart/dart.hpp"
 
 class RigidBody;
 class CollisionInterface;
@@ -64,4 +64,4 @@ class MyWorld {
 	Eigen::Vector3d mForce;
 };
 
-#endif
+#endif // EXAMPLES_RB_MYWORLD_HPP_

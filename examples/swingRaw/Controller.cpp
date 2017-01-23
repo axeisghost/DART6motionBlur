@@ -41,10 +41,6 @@ Controller::Controller(dart::dynamics::SkeletonPtr _skel, dart::constraint::Cons
   mSkel = _skel;
   mConstraintSolver = _constrSolver;
   mTimestep = _t;
-  //mVision = NULL;  // mVision Added
-  mJudger = NULL;    // Initial the juder to null
-  mMode = "Threshold";   // Set the default mode to naive strategy
-  firstRelease = true;
 
   int nDof = mSkel->getNumDofs();
   mKp = Eigen::MatrixXd::Identity(nDof, nDof);
@@ -57,9 +53,6 @@ Controller::Controller(dart::dynamics::SkeletonPtr _skel, dart::constraint::Cons
   mDefaultPose = mSkel->getPositions();
   mDesiredDofs = mDefaultPose;
   
-  //std::cout << "WWWWWWWWWWWWWWWW" << mSkel->getDof("j_thigh_left_z")->getIndexInSkeleton() << std::endl;
-    
-    
   mTorques.setZero();
 
   // Using SPD results in simple spring coefficients
@@ -100,8 +93,6 @@ Controller::Controller(dart::dynamics::SkeletonPtr _skel, dart::constraint::Cons
     int index = dofIndex[i];
     mKp(index, index) = 1.0;
     mKd(index, index) = 0.1;
-    //mKp(index, index) = 1.0;
-    //mKd(index, index) = 0.1;
   }
 
   for (int i = 0; i < nDof; i++)
@@ -148,8 +139,6 @@ void Controller::computeTorques(int _currentFrame) {
     release();
   } else if (mState == "SWING") {
     swing();
-  } else if (mState == "RESTAND") {
-    restand();
   } else {
     std::cout << "Illegal state: " << mState << std::endl;
   }
@@ -164,28 +153,11 @@ void Controller::checkContactState() {
   mFootContact = NULL;
   mLeftHandContact = NULL;
   mRightHandContact = NULL;
-  // ********************************************
-  // *** Modified Part of replacing functions ***
-  // ********************************************
-  //dart::collision::CollisionDetector* cd = mConstraintSolver->getCollisionDetector();
   const auto& result = mConstraintSolver->getLastCollisionResult();
-  //int nContacts = cd->getNumContacts();
-  //for (int i = 0; i < nContacts; i++) {
-    
   for (const auto& contact : result.getContacts()) {
-    //dart::dynamics::BodyNodePtr body1 = cd->getContact(i).bodyNode1.lock().get();
-    //dart::dynamics::BodyNodePtr body2 = cd->getContact(i).bodyNode2.lock().get();
-    //auto shapeNode1 = contact.collisionObject1->getShapeFrame()->asShapeNode();
-    //auto shapeNode2 = contact.collisionObject2->getShapeFrame()->asShapeNode();
-    //assert(shapeNode1);
-    //assert(shapeNode2);
-    
-      
-    dart::dynamics::BodyNode* body1 = const_cast<dart::dynamics::ShapeFrame*>(contact.collisionObject1->getShapeFrame())->asShapeNode()->getBodyNodePtr().get();
-    dart::dynamics::BodyNode* body2 = const_cast<dart::dynamics::ShapeFrame*>(contact.collisionObject2->getShapeFrame())->asShapeNode()->getBodyNodePtr().get();
-    //dart::dynamics::BodyNode* body1 = shapeNode1->getBodyNodePtr().get();
-    //dart::dynamics::BodyNode* body2 = shapeNode2->getBodyNodePtr().get();
-      
+      dart::dynamics::BodyNode* body1 = const_cast<dart::dynamics::ShapeFrame*>(contact.collisionObject1->getShapeFrame())->asShapeNode()->getBodyNodePtr().get();
+      dart::dynamics::BodyNode* body2 = const_cast<dart::dynamics::ShapeFrame*>(contact.collisionObject2->getShapeFrame())->asShapeNode()->getBodyNodePtr().get();
+  
     if (body1 == mSkel->getBodyNode("h_heel_left") || body1 == mSkel->getBodyNode("h_heel_left")
         || body1 == mSkel->getBodyNode("h_heel_right") || body1 == mSkel->getBodyNode("h_heel_right"))
       mFootContact = body2;
@@ -330,19 +302,12 @@ void Controller::grab() {
   mDesiredDofs[mSkel->getDof("j_forearm_right")->getIndexInSkeleton()] = 0.4;
   stablePD();
   mTimer--;
-    
 
   if (mTimer == 0) {
     mState = "SWING";
-      if (mMode == "Naive") {
-        mTimer = 226;
-      }
-      else {
-        mTimer = 500000;
-      }
     std::cout << mCurrentFrame << ": " << "GRAB -> SWING" << std::endl;
   }
-}
+}  
 
 void Controller::swing() {
   // TODO: Need a better controller to increase the speed
@@ -354,125 +319,11 @@ void Controller::swing() {
   mDesiredDofs[mSkel->getDof("j_bicep_right_y")->getIndexInSkeleton()] = 2.6;
   mDesiredDofs[mSkel->getDof("j_forearm_left")->getIndexInSkeleton()] = 0.4;
   mDesiredDofs[mSkel->getDof("j_forearm_right")->getIndexInSkeleton()] = 0.4;
-    
-    // Use Jacobian transpose to compute pushing torques
-    Eigen::VectorXd pos = mSkel->getPositions();
-    Eigen::VectorXd vel = mSkel->getVelocities();
-    
-    //std::cout << "____________" << std::endl;
-    //std::cout << pos[3] << std::endl;
-    //std::cout << pos[4] << std::endl;
-    //std::cout << pos[5] << std::endl;
-    //std::cout << mDesiredDofs.size() << std::endl;
-    
-    int framesToLeft = std::max(mJudger->framesToLeft() - (mCurrentFrame%17),0);
-    //int framesToLeft = mJudger->framesToLeft();
-    //std::cout << framesToLeft << std::endl;
-    
-  if (mMode == "Naive")
-  {
-    if ( pos[3] <0.81 )
-    {
-      Eigen::Vector3d vf(199.0, 0, 0.0);
-      Eigen::Vector3d offset(0.05, -0.02, 0.0);
-      virtualForce(vf, mSkel->getBodyNode("h_forearm_left"), offset);
-      virtualForce(vf, mSkel->getBodyNode("h_forearm_right"), offset);
-      virtualForce(vf, mSkel->getBodyNode("h_bicep_left"), offset);
-      virtualForce(vf, mSkel->getBodyNode("h_bicep_right"), offset);
-    }
-    else
-    {
-      Eigen::Vector3d vf(-199.0, 0, 0.0);
-      Eigen::Vector3d offset(0.05, -0.02, 0.0);
-      virtualForce(vf, mSkel->getBodyNode("h_forearm_left"), offset);
-      virtualForce(vf, mSkel->getBodyNode("h_forearm_right"), offset);
-      virtualForce(vf, mSkel->getBodyNode("h_bicep_left"), offset);
-      virtualForce(vf, mSkel->getBodyNode("h_bicep_right"), offset);
-    }
-  }
-  else if (mMode == "Threshold")
-  {
-      if ( pos[3] <0.81 )
-      {
-          Eigen::Vector3d vf(150.0, 0, 0.0);
-          Eigen::Vector3d offset(0.05, -0.02, 0.0);
-          
-          virtualForce(vf, mSkel->getBodyNode("h_forearm_left"), offset);
-          virtualForce(vf, mSkel->getBodyNode("h_forearm_right"), offset);
-          virtualForce(vf, mSkel->getBodyNode("h_bicep_left"), offset);
-          virtualForce(vf, mSkel->getBodyNode("h_bicep_right"), offset);
-          //virtualForce(vf, mSkel->getBodyNode("h_scapula_left"), offset);
-          //virtualForce(vf, mSkel->getBodyNode("h_scapula_right"), offset);
-      }
-      else
-      {
-
-          Eigen::Vector3d vf(-199.0, 0, 0.0);
-          Eigen::Vector3d offset(0.05, -0.02, 0.0);
-          
-          virtualForce(vf, mSkel->getBodyNode("h_forearm_left"), offset);
-          virtualForce(vf, mSkel->getBodyNode("h_forearm_right"), offset);
-          virtualForce(vf, mSkel->getBodyNode("h_bicep_left"), offset);
-          virtualForce(vf, mSkel->getBodyNode("h_bicep_right"), offset);
-          //virtualForce(vf, mSkel->getBodyNode("h_scapula_left"), offset);
-          //virtualForce(vf, mSkel->getBodyNode("h_scapula_right"), offset);
-      }
-  }
-  else if (mMode == "Test")
-  {
-    if ( pos[3] <0.81 )
-    {
-        //mDesiredDofs[mSkel->getDof("j_bicep_left_z")->getIndexInSkeleton()] = -1;
-        //mDesiredDofs[mSkel->getDof("j_bicep_left_y")->getIndexInSkeleton()] = -2.6;
-        //mDesiredDofs[mSkel->getDof("j_bicep_right_z")->getIndexInSkeleton()] = -1;
-        //mDesiredDofs[mSkel->getDof("j_bicep_right_y")->getIndexInSkeleton()] = 2.6;
-        mDesiredDofs[mSkel->getDof("j_forearm_left")->getIndexInSkeleton()] = 0.4;
-        mDesiredDofs[mSkel->getDof("j_forearm_right")->getIndexInSkeleton()] = 0.4;
-        Eigen::Vector3d vf(200.0, 0, 0.0);
-        Eigen::Vector3d offset(0.05, -0.02, 0.0);
-        
-        virtualForce(vf, mSkel->getBodyNode("h_forearm_left"), offset);
-        virtualForce(vf, mSkel->getBodyNode("h_forearm_right"), offset);
-        //virtualForce(vf, mSkel->getBodyNode("h_bicep_left"), offset);
-        //virtualForce(vf, mSkel->getBodyNode("h_bicep_right"), offset);
-        //virtualForce(vf, mSkel->getBodyNode("h_scapula_left"), offset);
-        //virtualForce(vf, mSkel->getBodyNode("h_scapula_right"), offset);
-    }
-    else
-    {
-        //mDesiredDofs[mSkel->getDof("j_bicep_left_z")->getIndexInSkeleton()] = 1;
-        //mDesiredDofs[mSkel->getDof("j_bicep_left_y")->getIndexInSkeleton()] = -2.6;
-        //mDesiredDofs[mSkel->getDof("j_bicep_right_z")->getIndexInSkeleton()] = 1;
-        //mDesiredDofs[mSkel->getDof("j_bicep_right_y")->getIndexInSkeleton()] = 2.6;
-        mDesiredDofs[mSkel->getDof("j_forearm_left")->getIndexInSkeleton()] = -0.4;
-        mDesiredDofs[mSkel->getDof("j_forearm_right")->getIndexInSkeleton()] = -0.4;
-        Eigen::Vector3d vf(-160.0, 0, 0.0);
-        Eigen::Vector3d offset(0.05, -0.02, 0.0);
-        
-        virtualForce(vf, mSkel->getBodyNode("h_forearm_left"), offset);
-        virtualForce(vf, mSkel->getBodyNode("h_forearm_right"), offset);
-        //virtualForce(-1*vf, mSkel->getBodyNode("h_bicep_left"), offset);
-        //virtualForce(-1*vf, mSkel->getBodyNode("h_bicep_right"), offset);
-        //virtualForce(vf, mSkel->getBodyNode("h_scapula_left"), offset);
-        //virtualForce(vf, mSkel->getBodyNode("h_scapula_right"), offset);
-    }
-  }
-    
-  mTimer--;
-  stablePD();
   
-  if (mMode == "Threshold")
-  {
-    if (mSkel->getPositions()[3] >= 1.18 && mSkel->getPositions()[3] <= 1.25 \
-        && mSkel->getVelocities()[3]>0 && mSkel->getVelocities()[4]>0\
-        && framesToLeft>0 && framesToLeft<std::max(15,int(50-std::abs(10*mJudger->eVelocity))) )
-    {
-      mState = "RELEASE";
-      std::cout << mCurrentFrame << ": " << "SWING -> RELEASE" << std::endl;
-    }
-  }
-    
-  if (mTimer==0) {
+  stablePD();
+
+  // TODO: Figure out the condition to release the bar
+  if (false) {
     mState = "RELEASE";
     std::cout << mCurrentFrame << ": " << "SWING -> RELEASE" << std::endl;
   }
@@ -487,49 +338,8 @@ void Controller::release() {
   mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = -1.5;
   mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = -1.5;
   stablePD();
-
-  if (firstRelease) {
-    std::cout << "xPosition:  " << mSkel->getPositions()[3] << std::endl;
-    std::cout << "yPosition:  " << mSkel->getPositions()[4] << std::endl;
-    std::cout << "xVelosity:  " << mSkel->getVelocities()[3] << std::endl;
-    std::cout << "yVelosity:  " << mSkel->getVelocities()[4] << std::endl;
-    std::cout << "frameToLeft:  " << mJudger->framesToLeft() - (mCurrentFrame%17) << std::endl;
-    firstRelease = false;
-  }
-    /////////////////////////////////////////////////////
-    // ADD to stand on on the platform
-    checkContactState();
-    if (mFootContact)
-    {
-        mState = "RESTAND";
-        std::cout << mCurrentFrame << ": " << "RELEASE -> STAND" << std::endl;
-    }
-    
 }
-
-void Controller::restand() {
-    if (mMode == "Naive")
-    {
-      mDesiredDofs = mDefaultPose;
-      stablePD();
-    }
-    else if (mMode == "Threshold")
-    {
-        mDesiredDofs = mDefaultPose;
-        stablePD();
-    }
-    else
-    {
-        mDesiredDofs = mDefaultPose;
-        mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = -1.5;
-        mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = -1.5;
-        mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = -1.5;
-        stablePD();
-    }
-    //ankleStrategy();
-}
-
-
+  
 void Controller::stablePD() {
   Eigen::VectorXd q = mSkel->getPositions();
   Eigen::VectorXd dq = mSkel->getVelocities();
@@ -580,17 +390,10 @@ void Controller::leftHandGrab() {
   checkContactState();
   if (mLeftHandContact == NULL)
     return;
-  //dart::dynamics::BodyNode* bd = mSkel->getBodyNode("h_hand_left");
-  //dart::constraint::WeldJointConstraint *hold = new dart::constraint::WeldJointConstraint(bd, mLeftHandContact);
-  // *************************************
-  // *** Modified Part of adding Joint ***
-  // *************************************
   dart::dynamics::BodyNode* bd = mSkel->getBodyNode("h_hand_left");
   mLeftHandHold = std::make_shared<dart::constraint::WeldJointConstraint>(bd);
   mConstraintSolver->addConstraint(mLeftHandHold);
-  //mConstraintSolver->addConstraint(hold);
   bd->setCollidable(false);
-  //mLeftHandHold = hold;
 }
 
 void Controller::leftHandRelease() {
@@ -608,18 +411,11 @@ void Controller::rightHandGrab() {
   checkContactState();
   if (mRightHandContact == NULL)
     return;
-  //dart::dynamics::BodyNode* bd = mSkel->getBodyNode("h_hand_right");
-  //dart::constraint::WeldJointConstraint *hold = new dart::constraint::WeldJointConstraint(bd, mRightHandContact);
-  // *************************************
-  // *** Modified Part of adding Joint ***
-  // *************************************
   dart::dynamics::BodyNode* bd = mSkel->getBodyNode("h_hand_right");
   mRightHandHold = std::make_shared<dart::constraint::WeldJointConstraint>(bd);
   mConstraintSolver->addConstraint(mRightHandHold);
-  //mConstraintSolver->addConstraint(hold);
   bd->setCollidable(false);
-  //mRightHandHold = hold;
-}   
+}
 
 void Controller::rightHandRelease() {
   if (mRightHandHold == NULL)
@@ -649,6 +445,3 @@ Eigen::MatrixXd Controller::getKd() {
   return mKd;
 }
 
-void Controller::setJudger(Judger* _judger) {
-    mJudger = _judger;
-}

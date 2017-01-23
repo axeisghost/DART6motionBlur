@@ -1,7 +1,12 @@
-#include "dart/dart.h"
-#include "MyWindow.h"
-#include <iostream>
+/*
+ * For Dart 6.1 & 6.2
+ */
 
+#include "dart/dart.hpp"
+#include "dart/gui/gui.hpp"
+#include "MyWindow.hpp"
+
+#include <iostream>
 
 int main(int argc, char* argv[])
 {

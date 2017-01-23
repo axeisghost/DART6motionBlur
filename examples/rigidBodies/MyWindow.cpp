@@ -1,6 +1,6 @@
-#include "MyWindow.h"
-#include "RigidBody.h"
-#include "CollisionInterface.h"
+#include "MyWindow.hpp"
+#include "RigidBody.hpp"
+#include "CollisionInterface.hpp"
 #include <cstdio>
 #include <iostream>
 

@@ -1,10 +1,10 @@
-#include "RigidBody.h"
-#include "dart/renderer/RenderInterface.h"
+#include "RigidBody.hpp"
+#include "dart/gui/RenderInterface.hpp"
 #include <iostream>
 
 using namespace Eigen;
 
-void RigidBody::draw(dart::renderer::RenderInterface* _ri) {
+void RigidBody::draw(dart::gui::RenderInterface* _ri) {
     if (!_ri)
         return;
 

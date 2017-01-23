@@ -35,46 +35,68 @@
  *   POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef APPS_SWING_MYWINDOW_HPP_
-#define APPS_SWING_MYWINDOW_HPP_
+#ifndef EXAMPLES_SWING_CONTROLLER_HPP_
+#define EXAMPLES_SWING_CONTROLLER_HPP_
 
-
-#include <cstdarg>
+#include <vector>
 
 #include <Eigen/Dense>
 
 #include "dart/dart.hpp"
-#include "dart/gui/gui.hpp"
-#include "Controller.hpp"
-#include "Vision.hpp"
 
-class MyWindow : public dart::gui::MotionBlurSimWindow
-{
+
+class Controller {
 public:
-  MyWindow();
-  virtual ~MyWindow();
+  Controller(dart::dynamics::SkeletonPtr _skel, dart::constraint::ConstraintSolver* _constrSolver,
+             double _t);
+  virtual ~Controller();
 
-  virtual void timeStepping();
-  void drawWorld() const override;
-  //virtual void drawSkels();
-  virtual void keyboard(unsigned char _key, int _x, int _y);
+  Eigen::VectorXd getTorques();
+  double getTorque(int _index);
+  void setDesiredDof(int _index, double _val);
+  void computeTorques(int _currentFrame);
+  void setState(std::string _state);
+  dart::dynamics::SkeletonPtr getSkel();
+  Eigen::VectorXd getDesiredDofs();
+  Eigen::MatrixXd getKp();
+  Eigen::MatrixXd getKd();
 
-  void setController(Controller *_controller);
-  void setJudger(Judger *_judger);
-  
-private:
-  void movePlatforms();
-  void updateSensor();
-  bool dumpImages();
-  
-  Controller* mController;
-  Judger* mJudger; // The juder added for estimating speed from the vision
-  double mSpeed;
-  std::vector<unsigned char> mInputSensor;
-  std::vector<unsigned char> mScreenshotTemp;
-  //std::deque<std::vector<unsigned char>> mPrevScreenshot;
-  bool mDumpImages;
-  double mTotalEffort;
+protected:
+  void stand();
+  void crouch();
+  void jump();
+  void reach();
+  void grab();
+  void swing();
+  void release();
+  // Basic control building blocks
+  void stablePD();
+  void ankleStrategy();
+  void virtualForce(Eigen::Vector3d _force, dart::dynamics::BodyNode* _bodyNode, Eigen::Vector3d _offset);
+  // Contact states
+  void checkContactState();
+  void leftHandGrab();
+  void rightHandGrab();
+  void leftHandRelease();
+  void rightHandRelease();
+
+  dart::dynamics::SkeletonPtr mSkel;
+  dart::constraint::ConstraintSolver* mConstraintSolver;
+  Eigen::VectorXd mTorques;
+  Eigen::VectorXd mDefaultPose;
+  Eigen::VectorXd mDesiredDofs;
+  Eigen::MatrixXd mKp;
+  Eigen::MatrixXd mKd;
+  double mTimestep;
+  double mPreOffset;
+  int mTimer;
+  std::string mState;
+  dart::constraint::WeldJointConstraintPtr mLeftHandHold;
+  dart::constraint::WeldJointConstraintPtr mRightHandHold;
+  dart::dynamics::BodyNode* mFootContact;
+  dart::dynamics::BodyNodePtr mLeftHandContact;
+  dart::dynamics::BodyNodePtr mRightHandContact;
+  int mCurrentFrame;
 };
 
-#endif  // APPS_SWING_MYWINDOW_HPP_
+#endif  // EXAMPLES_SWING_CONTROLLER_HPP_
