@@ -6,6 +6,15 @@
 //
 //
 
+/////////////////////////////////////////////////////////////////////////
+// OpenGL Motion blur require the Accumulate function of OpenGL
+// To intergrate this class into the engine
+// Change line 86 of dart/gui/GlutWindows.cpp
+// From  glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA | GLUT_MULTISAMPLE);
+// to    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA | GLUT_MULTISAMPLE | GLUT_ACCUM);
+/////////////////////////////////////////////////////////////////////////
+
+
 #include "dart/gui/MotionBlurSimWindow.hpp"
 
 #include "dart/constraint/ConstraintSolver.hpp"
@@ -28,15 +37,20 @@ MotionBlurSimWindow::~MotionBlurSimWindow()
 //==============================================================================
 void MotionBlurSimWindow::setMotionBlurFrequency(int _val)
 {
-  mMotionBlurFrequency = _val;
+  if ( _val > mDisplayTimeout / (mWorld->getTimeStep() * 1000) )
+  {
+      std::cout << "WARNING: The frequency is too low, set to no motion blur effect instead" << std::endl;
+      mMotionBlurFrequency = mDisplayTimeout / (mWorld->getTimeStep() * 1000);
+  }
+  else
+    mMotionBlurFrequency = _val;
 }
     
 //==============================================================================
 void MotionBlurSimWindow::render()
 {
   int numIter = mDisplayTimeout / (mWorld->getTimeStep() * 1000);
-  int numMotionBlurFrames = ceil( mDisplayTimeout / (mWorld->getTimeStep() * 1000 * mMotionBlurFrequency) );
-    std::cout << numMotionBlurFrames << std::endl;
+  int numMotionBlurFrames = ceil( floor(mDisplayTimeout) / (mWorld->getTimeStep() * 1000 * mMotionBlurFrequency) );
   if (!mPlay && mSimulating)
   {
     for (int i = 0; i < numIter; i+=mMotionBlurFrequency)
@@ -102,12 +116,10 @@ void MotionBlurSimWindow::render()
       {
         //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glAccum(GL_LOAD, 1/float(numMotionBlurFrames));
-          std::cout << "--------" << i << std::endl;
       }
       else
       {
         glAccum(GL_ACCUM, 1/float(numMotionBlurFrames));
-          std::cout << "..." << i << std::endl;
       }
     } // for loop
   } // if simulating
