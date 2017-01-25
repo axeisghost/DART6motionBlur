@@ -42,6 +42,7 @@
 #define LEFT_BOUNDARY -0.6
 #define PLATFORM_SPEED 0.75
 
+//MyWindow::MyWindow(): SimWindow() {
 MyWindow::MyWindow(): MotionBlurSimWindow() {
   mController = NULL;
   mJudger = NULL;
@@ -73,7 +74,8 @@ void MyWindow::timeStepping() {
   // Integrate forward for one time step
   mWorld->step();
   // Update the sensor at 60Hz; pixel values (RGBA) are stored in mInputSensor
-  if (mWorld->getSimFrames() % 17 == 0)
+  //updateSensor();
+  if (mWorld->getSimFrames() % 5 == 0)
   {
     updateSensor();
     mJudger->judge();
@@ -228,8 +230,8 @@ void MyWindow::updateSensor() {
   glScalef(0.51, 0.51, 0.51);
   glTranslatef(-1.68962, 0.00920964, -0.00350334);
   
-  //initLights();
-  //draw();
+  initLights();
+  draw();
 
   glReadPixels(0, 0, mWinWidth, mWinHeight, GL_RGBA, GL_UNSIGNED_BYTE, &mInputSensor[0]);
   
@@ -264,10 +266,10 @@ bool MyWindow::dumpImages() {
   }
 
   // Shot level motion blur
-  /*
+  
   std::vector<unsigned char> toPush = std::vector<unsigned char> (mScreenshotTemp);
   mPrevScreenshot.push_back(toPush);
-  if (mPrevScreenshot.size() > 10) {
+  if (mPrevScreenshot.size() > 3) {
     mPrevScreenshot.pop_front();
   }
   mScreenshotTemp = std::vector<unsigned char> (mScreenshotTemp.size(), 0);
@@ -288,8 +290,8 @@ bool MyWindow::dumpImages() {
     std::cout << "wrote screenshot " << fileName << "\n";
     return true;
   }
-  */
-    
+
+  /*
   unsigned result = lodepng::encode(fileName, mScreenshotTemp, mWinWidth, mWinHeight);
     
   // if there's an error, display it
@@ -301,4 +303,5 @@ bool MyWindow::dumpImages() {
     std::cout << "wrote screenshot " << fileName << "\n";
     return true;
   }
+  */
 }

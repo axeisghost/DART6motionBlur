@@ -48,6 +48,7 @@
 #include "Controller.hpp"
 #include "Vision.hpp"
 
+//class MyWindow : public dart::gui::SimWindow
 class MyWindow : public dart::gui::MotionBlurSimWindow
 {
 public:
@@ -72,7 +73,7 @@ private:
   double mSpeed;
   std::vector<unsigned char> mInputSensor;
   std::vector<unsigned char> mScreenshotTemp;
-  //std::deque<std::vector<unsigned char>> mPrevScreenshot;
+  std::deque<std::vector<unsigned char>> mPrevScreenshot;
   bool mDumpImages;
   double mTotalEffort;
 };
